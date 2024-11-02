@@ -1,13 +1,13 @@
 import streamlit as st
-from openai import OpenAI
 from groq import Groq
+import os
 
 # Show title and description.
 st.title("RecipEase")
 user_ingredients = st.text_input("Which Ingredients Do You Have?", )
 
 client = Groq(
-    api_key= "xxxxxxxxxxxxx",
+    api_key=os.environ.get("GROQ_API_KEY"),
 )
 
 chat_completion = client.chat.completions.create(
@@ -20,7 +20,7 @@ chat_completion = client.chat.completions.create(
         # how it should behave throughout the conversation.
         {
             "role": "system",
-            "content": "You know everything about recipes and food, and can give helpful recipes and cooking advice."
+            "content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. don't respond with anything else."
         },
         # Set a user message for the assistant to respond to.
         {
@@ -43,7 +43,7 @@ chat_completion = client.chat.completions.create(
 
     # The maximum number of tokens to generate. Requests can use up to
     # 32,768 tokens shared between prompt and completion.
-    max_tokens=1024,
+    max_tokens=512,
 
     # Controls diversity via nucleus sampling: 0.5 means half of all
     # likelihood-weighted options are considered.
