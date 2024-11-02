@@ -1,5 +1,6 @@
 import streamlit as st
 from groq import Groq
+import os
 
 # Set up page configuration for better presentation
 st.set_page_config(
@@ -58,7 +59,7 @@ st.markdown("### Enter Ingredients:")
 user_ingredients = st.text_input("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
 
 # Initialize the Groq API client
-client = Groq(api_key="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")
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # Sidebar for extra options (optional, for additional functionality)
 st.sidebar.header("Settings")
