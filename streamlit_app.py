@@ -60,12 +60,18 @@ user_ingredients = st.text_input("Which Ingredients Do You Have?", placeholder="
 # Initialize the Groq API client
 client = Groq(api_key="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")
 
+# Sidebar for extra options (optional, for additional functionality)
+st.sidebar.header("Settings")
+st.sidebar.write("Adjust your preferences here.")
+st.sidebar.slider("Adjust Recipe Complexity:", 1, 5, 3)
+cuisine = st.sidebar.selectbox("Select Cuisine Type", ["Any", "Italian", "Chinese", "Mexican", "Indian", "Mediterranean"])
+
 # Define a function to get recipe recommendations
 def get_recipe_recommendation(ingredients):
     chat_completion = client.chat.completions.create(
         messages=[
-            {"role": "system", "content": "You know everything about recipes and food, and can give helpful recipes and cooking advice."},
-            {"role": "user", "content": ingredients},
+            {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. don't respond with anything else."},
+            {"role": "user", "content": ingredients + cuisine},
         ],
         model="llama3-8b-8192",
         temperature=0.5,
@@ -86,8 +92,4 @@ if st.button("Get Recipe Recommendation", key="btn-recipe"):
     else:
         st.warning("Please enter at least one ingredient.")
 
-# Sidebar for extra options (optional, for additional functionality)
-st.sidebar.header("Settings")
-st.sidebar.write("Adjust your preferences here.")
-st.sidebar.slider("Adjust Recipe Complexity:", 1, 5, 3)
-st.sidebar.selectbox("Select Cuisine Type", ["Any", "Italian", "Chinese", "Mexican", "Indian", "Mediterranean"])
+
