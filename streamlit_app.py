@@ -1,63 +1,93 @@
 import streamlit as st
-from openai import OpenAI
 from groq import Groq
 
-# Show title and description.
-st.title("RecipEase")
-user_ingredients = st.text_input("Which Ingredients Do You Have?", )
-
-client = Groq(
-    api_key= "xxxxxxxxxxxxx",
+# Set up page configuration for better presentation
+st.set_page_config(
+    page_title="RecipEase",
+    page_icon="🍲",
+    layout="centered",
+    initial_sidebar_state="auto",
 )
 
-chat_completion = client.chat.completions.create(
-    #
-    # Required parameters
-    #
-    messages=[
-        # Set an optional system message. This sets the behavior of the
-        # assistant and can be used to provide specific instructions for
-        # how it should behave throughout the conversation.
-        {
-            "role": "system",
-            "content": "You know everything about recipes and food, and can give helpful recipes and cooking advice."
-        },
-        # Set a user message for the assistant to respond to.
-        {
-            "role": "user",
-            "content": user_ingredients,
-        }
-    ],
-
-    # The language model which will generate the completion.
-    model="llama3-8b-8192",
-
-    #
-    # Optional parameters
-    #
-
-    # Controls randomness: lowering results in less random completions.
-    # As the temperature approaches zero, the model will become deterministic
-    # and repetitive.
-    temperature=0.5,
-
-    # The maximum number of tokens to generate. Requests can use up to
-    # 32,768 tokens shared between prompt and completion.
-    max_tokens=1024,
-
-    # Controls diversity via nucleus sampling: 0.5 means half of all
-    # likelihood-weighted options are considered.
-    top_p=1,
-
-    # A stop sequence is a predefined or user-specified text string that
-    # signals an AI to stop generating content, ensuring its responses
-    # remain focused and concise. Examples include punctuation marks and
-    # markers like "[end]".
-    stop=None,
-
-    # If set, partial message deltas will be sent.
-    stream=False,
+# Custom CSS for styling
+st.markdown(
+    """
+    <style>
+    .title {
+        font-family: 'Arial', sans-serif;
+        color: #ff6347; /* Tomato color for a pop */
+        text-align: center;
+    }
+    .ingredient-input {
+        font-size: 18px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+    .btn-style {
+        background-color: #4CAF50; /* Green button */
+        color: white;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        display: block;
+        margin: auto;
+    }
+    .recipe-container {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        font-size: 16px;
+        color: #333;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
-# Print the completion returned by the LLM.
-if(user_ingredients is not (None or "")):
-    st.write(chat_completion.choices[0].message.content)
+
+# Display title, logo, and description
+st.markdown("<h1 class='title'>RecipEase</h1>", unsafe_allow_html=True)
+st.image("recipeclip.jpg", width=120)
+st.markdown("Welcome to **RecipEase**! Enter ingredients you have, and get recipes instantly.")
+
+# User Input Section
+st.markdown("### Enter Ingredients:")
+user_ingredients = st.text_input("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
+
+# Initialize the Groq API client
+client = Groq(api_key="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")
+
+# Define a function to get recipe recommendations
+def get_recipe_recommendation(ingredients):
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": "You know everything about recipes and food, and can give helpful recipes and cooking advice."},
+            {"role": "user", "content": ingredients},
+        ],
+        model="llama3-8b-8192",
+        temperature=0.5,
+        max_tokens=1024,
+        top_p=1,
+        stop=None,
+        stream=False,
+    )
+    return chat_completion.choices[0].message.content
+
+# Button to submit and get recipe recommendations
+if st.button("Get Recipe Recommendation", key="btn-recipe"):
+    if user_ingredients:
+        with st.spinner("Finding recipes..."):
+            recipe = get_recipe_recommendation(user_ingredients)
+        # Display recipe in a styled container
+        st.markdown("<div class='recipe-container'>" + recipe + "</div>", unsafe_allow_html=True)
+    else:
+        st.warning("Please enter at least one ingredient.")
+
+# Sidebar for extra options (optional, for additional functionality)
+st.sidebar.header("Settings")
+st.sidebar.write("Adjust your preferences here.")
+st.sidebar.slider("Adjust Recipe Complexity:", 1, 5, 3)
+st.sidebar.selectbox("Select Cuisine Type", ["Any", "Italian", "Chinese", "Mexican", "Indian", "Mediterranean"])
