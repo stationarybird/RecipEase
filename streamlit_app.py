@@ -4,10 +4,10 @@ from groq import Groq
 
 # Show title and description.
 st.title("RecipEase")
-user_ingredients = st.text_input("Which Ingredients Do You Have?")
+user_ingredients = st.text_input("Which Ingredients Do You Have?", )
 
 client = Groq(
-    api_key= "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",
+    api_key= "xxxxxxxxxxxxx",
 )
 
 chat_completion = client.chat.completions.create(
@@ -58,7 +58,6 @@ chat_completion = client.chat.completions.create(
     # If set, partial message deltas will be sent.
     stream=False,
 )
-#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 = key
 # Print the completion returned by the LLM.
-if(user_ingredients is not None):
+if(user_ingredients is not (None or "")):
     st.write(chat_completion.choices[0].message.content)
