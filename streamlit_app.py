@@ -67,6 +67,10 @@ uploaded_file = st.file_uploader("Upload an image of your ingredients", type=["j
 model_path = "food101_model.h5"
 model = tf.keras.models.load_model(model_path)
 
+
+with open("classes.txt", "r") as f:
+    class_labels = [line.strip() for line in f]
+
 def prepare_image(image_path):
     img = load_img(image_path, target_size=(224, 224))  # Resize image to 224x224
     img_array = img_to_array(img)  # Convert to numpy array
@@ -75,9 +79,9 @@ def prepare_image(image_path):
 
 def detect_ingredients(image_path):
     img = prepare_image(image_path)
-    preds = model.predict(img)  # Predict with the model
-    decoded_preds = decode_predictions(preds, top=5)[0]  # Decode predictions
-    ingredients = [(label, round(confidence * 100, 2)) for _, label, confidence in decoded_preds]
+    preds = model.predict(img)[0]  # Predict with the model
+    top_indices = preds.argsort()[-3:][::-1]  # Decode predictions
+    ingredients = [(class_labels[i], preds[i] * 100) for i in top_indices]
     return ingredients
 
 if uploaded_file is not None:
@@ -87,16 +91,15 @@ if uploaded_file is not None:
     # Call the ingredient detection function
     ingredients_probs = detect_ingredients("temp_image.jpg")
 
-    ingredients = [(class_labels[i], round(ingredients_probs[i] * 100, 2)) for i in np.argsort(ingredients_probs)[-5:]]
     
     # Display the detected ingredients
     st.write("Detected Ingredients:")
-    for ingredient, confidence in ingredients:
+    for ingredient, confidence in ingredients_probs:
         st.write(f"{ingredient}: {confidence}%")
 
 
 # Initialize the Groq API client
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+client = Groq(api_key="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")
 
 # Sidebar for extra options (optional, for additional functionality)
 st.sidebar.header("Settings")
