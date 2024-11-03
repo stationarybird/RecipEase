@@ -44,7 +44,7 @@ except Exception as e:
     st.error(e)
 
 if st.session_state['authentication_status']:
-    st.sidebar.write(f"Welcome **{st.session_state["name"]}**!")
+    st.sidebar.write(f"Welcome **{st.session_state['name']}**!")
 elif st.session_state['authentication_status'] is False:
     st.error('Username/password is incorrect')
 elif st.session_state['authentication_status'] is None:
