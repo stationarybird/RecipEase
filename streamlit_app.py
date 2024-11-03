@@ -68,6 +68,7 @@ if st.session_state['authentication_status']:
     st.sidebar.write(f"Welcome **{st.session_state['name']}**!")
     st.sidebar.page_link("streamlit_app.py", label="Home", icon="🏠")
     st.sidebar.page_link("pages/settings.py", label="Settings", icon="⚙️")
+    st.sidebar.page_link("pages/My_Pantry.py", label="My Pantry", icon="🚪")
     st.sidebar.page_link("pages/history.py", label="History", icon="📖")
 elif st.session_state['authentication_status'] is False:
     st.error('Username/password is incorrect')
@@ -176,7 +177,7 @@ if uploaded_file is not None:
 
 
     # Initialize the Groq API client
-    client = Groq(api_key="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")
+    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
     
     # Sidebar for extra options (optional, for additional functionality)
