@@ -1,6 +1,10 @@
 import streamlit as st
 from groq import Groq
 import os
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
+import numpy as np
 
 # Set up page configuration for better presentation
 st.set_page_config(
@@ -57,6 +61,39 @@ st.markdown("Welcome to **RecipEase**! Enter ingredients you have, and get recip
 # User Input Section
 st.markdown("### Enter Ingredients:")
 user_ingredients = st.text_input("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
+uploaded_file = st.file_uploader("Upload an image of your ingredients", type=["jpg", "jpeg", "png"])
+
+# Path to the saved model file
+model_path = "food101_model.h5"
+model = tf.keras.models.load_model(model_path)
+
+def prepare_image(image_path):
+    img = load_img(image_path, target_size=(224, 224))  # Resize image to 224x224
+    img_array = img_to_array(img)  # Convert to numpy array
+    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+    return preprocess_input(img_array)  # Preprocess the image
+
+def detect_ingredients(image_path):
+    img = prepare_image(image_path)
+    preds = model.predict(img)  # Predict with the model
+    decoded_preds = decode_predictions(preds, top=5)[0]  # Decode predictions
+    ingredients = [(label, round(confidence * 100, 2)) for _, label, confidence in decoded_preds]
+    return ingredients
+
+if uploaded_file is not None:
+    with open("temp_image.jpg", "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    
+    # Call the ingredient detection function
+    ingredients_probs = detect_ingredients("temp_image.jpg")
+
+    ingredients = [(class_labels[i], round(ingredients_probs[i] * 100, 2)) for i in np.argsort(ingredients_probs)[-5:]]
+    
+    # Display the detected ingredients
+    st.write("Detected Ingredients:")
+    for ingredient, confidence in ingredients:
+        st.write(f"{ingredient}: {confidence}%")
+
 
 # Initialize the Groq API client
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
