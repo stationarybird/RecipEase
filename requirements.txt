@@ -2,3 +2,4 @@ streamlit
 groq
 tensorflow
 numpy
+streamlit-authenticator

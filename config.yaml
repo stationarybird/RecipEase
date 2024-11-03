@@ -1,0 +1,30 @@
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      name: John Smith
+      password: abc # To be replaced with hashed password
+    rbriggs:
+      email: rbriggs@gmail.com
+      name: Rebecca Briggs
+      password: def # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: random_signature_key # Must be string
+  name: random_cookie_name
+preauthorized:
+  emails:
+  - melsby@gmail.com
+# credentials:
+#   usernames:
+#     john_doe:
+#       email: john.doe@example.com
+#       name: John Doe
+#       password: "hashed_password_here"
+# cookie:
+#   expiry_days: 30
+#   key: "a_random_key_here"
+#   name: "cookie_name_here"
+# preauthorized:
+#   emails: 
+#     - preauthorized_user@example.com
