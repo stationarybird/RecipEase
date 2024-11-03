@@ -2,6 +2,10 @@ import streamlit as st
 from groq import Groq
 import streamlit_authenticator as stauth
 import os
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
+import numpy as np
 import yaml
 from yaml.loader import SafeLoader
 import sqlite3
@@ -134,6 +138,42 @@ if st.session_state['authentication_status']:
 
     # User Input Section
     st.markdown("### Enter Ingredients:")
+uploaded_file = st.file_uploader("Upload an image of your ingredients", type=["jpg", "jpeg", "png"])
+
+# Path to the saved model file
+model_path = "food101_model.h5"
+model = tf.keras.models.load_model(model_path)
+
+
+with open("classes.txt", "r") as f:
+    class_labels = [line.strip() for line in f]
+
+def prepare_image(image_path):
+    img = load_img(image_path, target_size=(224, 224))  # Resize image to 224x224
+    img_array = img_to_array(img)  # Convert to numpy array
+    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+    return preprocess_input(img_array)  # Preprocess the image
+
+def detect_ingredients(image_path):
+    img = prepare_image(image_path)
+    preds = model.predict(img)[0]  # Predict with the model
+    top_indices = preds.argsort()[-3:][::-1]  # Decode predictions
+    ingredients = [(class_labels[i], preds[i] * 100) for i in top_indices]
+    return ingredients
+
+if uploaded_file is not None:
+    with open("temp_image.jpg", "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    
+    # Call the ingredient detection function
+    ingredients_probs = detect_ingredients("temp_image.jpg")
+
+    
+    # Display the detected ingredients
+    st.write("Detected Ingredients:")
+    for ingredient, confidence in ingredients_probs:
+        st.write(f"{ingredient}: {confidence}%")
+
 
     # Initialize the Groq API client
     client = Groq(api_key="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")
