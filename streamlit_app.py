@@ -1,6 +1,25 @@
 import streamlit as st
 from groq import Groq
+import streamlit_authenticator as stauth
 import os
+import yaml
+from yaml.loader import SafeLoader
+
+# # List of plain text passwords
+# passwords = ['abc', 'def']
+
+
+# # Hash the passwords
+# hasher = stauth.Hasher(passwords)
+# hash_passwords = hasher.hash_list()
+
+# Load YAML configuration
+try:
+    with open('config.yaml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+except FileNotFoundError:
+    st.error("Configuration file 'confid.yaml' not found.")
+    st.stop()
 
 # Set up page configuration for better presentation
 st.set_page_config(
@@ -9,6 +28,29 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="auto",
 )
+
+# Initialize the authenticator
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
+
+# Login Widgets
+try:
+    authenticator.login()
+except Exception as e:
+    st.error(e)
+
+if st.session_state['authentication_status']:
+    authenticator.logout()
+    st.write(f'Welcome *{st.session_state["name"]}*')
+elif st.session_state['authentication_status'] is False:
+    st.error('Username/password is incorrect')
+elif st.session_state['authentication_status'] is None:
+    st.warning('Please enter your username and password')
+
 
 # Custom CSS for styling
 st.markdown(
@@ -49,48 +91,64 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Display title, logo, and description
-st.markdown("<h1 class='title'>RecipEase</h1>", unsafe_allow_html=True)
-st.image("recipeclip.jpg", width=120)
-st.markdown("Welcome to **RecipEase**! Enter ingredients you have, and get recipes instantly.")
+if st.session_state['authentication_status']:
+    # Display title, logo, and description
+    st.markdown("<h1 class='title'>RecipEase</h1>", unsafe_allow_html=True)
+    st.image("recipeclip.jpg", width=120)
+    st.markdown("Welcome to **RecipEase**! Enter ingredients you have, and get recipes instantly.")
 
-# User Input Section
-st.markdown("### Enter Ingredients:")
-user_ingredients = st.text_input("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
+    # User Input Section
+    st.markdown("### Enter Ingredients:")
+    user_ingredients = st.text_input("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
 
-# Initialize the Groq API client
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    # Initialize the Groq API client
+    client = Groq(api_key="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")
 
-# Sidebar for extra options (optional, for additional functionality)
-st.sidebar.header("Settings")
-st.sidebar.write("Adjust your preferences here.")
-st.sidebar.slider("Adjust Recipe Complexity:", 1, 5, 3)
-cuisine = st.sidebar.selectbox("Select Cuisine Type", ["Any", "Italian", "Chinese", "Mexican", "Indian", "Mediterranean"])
+    # Sidebar for extra options (optional, for additional functionality)
+    st.sidebar.header("Settings")
+    st.sidebar.write("Adjust your preferences here.")
+    complexity = st.sidebar.slider("Adjust Recipe Complexity:", 1, 5, 3)
+    cuisine = st.sidebar.selectbox("Select Cuisine Type", ["Any", "Italian", "Chinese", "Mexican", "Indian", "Mediterranean"])
 
-# Define a function to get recipe recommendations
-def get_recipe_recommendation(ingredients):
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. don't respond with anything else."},
-            {"role": "user", "content": ingredients + cuisine},
-        ],
-        model="llama3-8b-8192",
-        temperature=0.5,
-        max_tokens=1024,
-        top_p=1,
-        stop=None,
-        stream=False,
-    )
-    return chat_completion.choices[0].message.content
+    def recipeComplexity(complexity):
+        match complexity:
+            case 1:
+                return "Very Easy"
+            case 2:
+                return "Easy"
+            case 3: 
+                return "Medium"
+            case 4:
+                return "Hard"
+            case 5: 
+                return "Very Hard"
+            case _:
+                return "Anything"   # Medium is the default case if complexity doesn't match anything
 
-# Button to submit and get recipe recommendations
-if st.button("Get Recipe Recommendation", key="btn-recipe"):
-    if user_ingredients:
-        with st.spinner("Finding recipes..."):
-            recipe = get_recipe_recommendation(user_ingredients)
-        # Display recipe in a styled container
-        st.markdown("<div class='recipe-container'>" + recipe + "</div>", unsafe_allow_html=True)
-    else:
-        st.warning("Please enter at least one ingredient.")
+    # Define a function to get recipe recommendations
+    def get_recipe_recommendation(ingredients):
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. don't respond with anything else."},
+                {"role": "user", "content": ingredients + cuisine + "The difficulty level of the recipe should be " + recipeComplexity(complexity)},
+            ],
+            model="llama3-8b-8192",
+            temperature=0.5,
+            max_tokens=1024,
+            top_p=1,
+            stop=None,
+            stream=False,
+        )
+        return chat_completion.choices[0].message.content
+
+    # Button to submit and get recipe recommendations
+    if st.button("Get Recipe Recommendation", key="btn-recipe"):
+        if user_ingredients:
+            with st.spinner("Finding recipes..."):
+                recipe = get_recipe_recommendation(user_ingredients)
+            # Display recipe in a styled container
+            st.markdown("<div class='recipe-container'>" + recipe + "</div>", unsafe_allow_html=True)
+        else:
+            st.warning("Please enter at least one ingredient.")
 
 
