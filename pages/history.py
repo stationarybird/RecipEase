@@ -44,6 +44,7 @@ if st.session_state['authentication_status']:
     st.sidebar.write(f"Welcome **{st.session_state['name']}**!")
     st.sidebar.page_link("streamlit_app.py", label="Home", icon="🏠")
     st.sidebar.page_link("pages/settings.py", label="Settings", icon="⚙️")
+    st.sidebar.page_link("pages/My_Pantry.py", label="My Pantry", icon="🚪")
     st.sidebar.page_link("pages/history.py", label="History", icon="📖")
     st.header("History")
     # Display history button and retrieve history on click
