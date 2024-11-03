@@ -169,7 +169,11 @@ if st.session_state['authentication_status']:
     def get_recipe_recommendation(ingredients):
         chat_completion = client.chat.completions.create(
             messages=[
-                {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. additionally, write out the instructions to make each dish. keep in mind their allergies and dietary restrictions and make sure these are not in the recipes. if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include it in the recipes you generate. take into account the complexity level the user gives don't respond with anything else."},
+                {"role": "system","content": """Based on the user input, respond with just list of recipes containing those 
+                ingredients, and also list out what other ingredients would be needed to make that recipe. 
+                keep in mind their allergies and dietary restrictions and make sure these are definitely not in the recipes. 
+                if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include 
+                it in the recipes you generate. take into account the complexity level the user gives. don't respond with anything else."""},
                 {"role": "user", "content": ingredients + cuisine + str(restrictions) + recipeComplexity(complexity)},
             ],
             model="llama3-8b-8192",
@@ -181,11 +185,51 @@ if st.session_state['authentication_status']:
         )
         return chat_completion.choices[0].message.content
 
+    def get_recipe_instructions(recipeNum, rlist):
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system","content": """Write out the instructions to make the recipe of the number given from the recipe list. 
+                keep in mind their allergies and dietary restrictions and make sure these are definitely not in the recipes. 
+                take into account the complexity level the user gives. don't respond with anything else."""},
+                {"role": "user", "content": rlist + recipeNum + str(restrictions) + recipeComplexity(complexity)},
+            ],
+            model="llama3-8b-8192",
+            temperature=0.5,
+            max_tokens=1024,
+            top_p=1,
+            stop=None,
+            stream=False,
+        )
+        return chat_completion.choices[0].message.content
+
+    def get_recipe_nutrition(recipe):
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system","content": """Write out the nutritional information of the recipe given above. don't respond with anything else."""},
+                {"role": "user", "content": recipe},
+            ],
+            model="llama3-8b-8192",
+            temperature=0.5,
+            max_tokens=1024,
+            top_p=1,
+            stop=None,
+            stream=False,
+        )
+        return chat_completion.choices[0].message.content
+ 
+
+
+
+
+
+
+
+
     # Button to submit and get recipe recommendations
     if st.button("Get Recipe Recommendation", key="btn-recipe"):
         if user_ingredients:
             with st.spinner("Finding recipes..."):
-                recipe = get_recipe_recommendation(user_ingredients)
+                st.session_state.recipe = get_recipe_recommendation(user_ingredients)
                 # Store user data
                 if st.session_state.get('authentication_status'):
                     store_user_data(
@@ -195,8 +239,41 @@ if st.session_state['authentication_status']:
                         complexity, 
                         cuisine
                     )
-            st.markdown("<div class='recipe-container'>" + recipe + "</div>", unsafe_allow_html=True)
+            #st.markdown("<div class='recipe-container'>" + recipe + "</div>", unsafe_allow_html=True)
         else:
             st.warning("Please enter at least one ingredient.")
+    
+    if 'recipe' in st.session_state:
+        # Display the recipe list in a styled container
+        st.markdown("<div class='recipe-container'>" + st.session_state.recipe + "</div>", unsafe_allow_html=True)
+
+        user_recipe = st.text_area("What Recipe do you want?", placeholder="Enter the recipe number or name from the list above.", help="Specify the recipe for which you want instructions.")
+        if st.button("Get Recipe Instructions", key="btn-instruction"):
+            if user_recipe:
+                with st.spinner("Finding instructions..."):
+                    recipe_instructions = get_recipe_instructions(user_recipe, st.session_state.recipe)
+                # Store the instructions in session state for consistent display
+                st.session_state.recipe_instructions = recipe_instructions
+            else:
+                st.warning("Please specify which recipe you want instructions for.")
+    
+    #Display the recipe instructions if available
+    if 'recipe_instructions' in st.session_state:
+        st.markdown("<div class='recipe-container'>" + st.session_state.recipe_instructions + "</div>", unsafe_allow_html=True)
+
+        respond = st.button("Would you like to see the nutritional information for this recipe?")
+
+        if respond:
+            if 'recipe_instructions' in st.session_state:
+                with st.spinner("Fetching nutritional information..."):
+                    nutrition_info = get_recipe_nutrition(st.session_state.recipe_instructions)
+                # Store nutritional info in session state to persist and display
+                st.session_state.nutrition_info = nutrition_info
+            else:
+                st.warning("Please retrieve the recipe instructions first.")
+
+        # Display the nutritional information if available in session state
+        if 'nutrition_info' in st.session_state:
+            st.markdown("<div class='recipe-container'>" + st.session_state.nutrition_info + "</div>", unsafe_allow_html=True)
 
 
