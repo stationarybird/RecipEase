@@ -136,7 +136,7 @@ if st.session_state['authentication_status']:
     st.markdown("### Enter Ingredients:")
 
     # Initialize the Groq API client
-    client = Groq(api_key="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")
+    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
     
     # Sidebar for extra options (optional, for additional functionality)
