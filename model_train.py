@@ -5,7 +5,7 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras import layers, models
 from tensorflow.keras.optimizers import Adam
 
-train_dir = 'food-101/food-101/food-101/train'
+train_dir = 'food-101/food-101/food-101/test'
 test_dir = 'food-101/food-101/food-101/test'
 
 # Check if the model file already exists
