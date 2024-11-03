@@ -1,4 +1,4 @@
-**RecipEase**
+## **RecipEase**
 
 The goal of this project is to create an application that allows users to enter common ingredients they want to create a recipe out of and output a list of famous recipes that incorporate those ingredients.
 
