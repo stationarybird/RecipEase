@@ -141,8 +141,8 @@ if st.session_state['authentication_status']:
     def get_recipe_recommendation(ingredients):
         chat_completion = client.chat.completions.create(
             messages=[
-                {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. additionally, write out the instructions to make each dish. keep in mind their allergies and dietary restrictions and make sure these are not in the recipes. if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include it in the recipes you generate.  don't respond with anything else."},
-                {"role": "user", "content": ingredients + cuisine + str(restrictions)},
+                {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. additionally, write out the instructions to make each dish. keep in mind their allergies and dietary restrictions and make sure these are not in the recipes. if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include it in the recipes you generate. take into account the complexity level the user gives. don't respond with anything else."},
+                {"role": "user", "content": ingredients + cuisine + str(restrictions) + complexity},
             ],
             model="llama3-8b-8192",
             temperature=0.5,
