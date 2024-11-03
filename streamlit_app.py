@@ -44,8 +44,7 @@ except Exception as e:
     st.error(e)
 
 if st.session_state['authentication_status']:
-    authenticator.logout()
-    st.write(f'Welcome *{st.session_state["name"]}*')
+    st.sidebar.write(f"Welcome **{st.session_state["name"]}**!")
 elif st.session_state['authentication_status'] is False:
     st.error('Username/password is incorrect')
 elif st.session_state['authentication_status'] is None:
@@ -78,13 +77,13 @@ st.markdown(
         margin: auto;
     }
     .recipe-container {
-        background-color: #262730;
-        border: 1px solid #ff6347;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
         border-radius: 8px;
         padding: 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         font-size: 16px;
-        color: #f9f9f9
+        color: #333;
     }
     </style>
     """,
@@ -121,6 +120,10 @@ if st.session_state['authentication_status']:
     complexity = st.sidebar.slider("Adjust Recipe Complexity:", 1, 5, 3)
     cuisine = st.sidebar.selectbox("Select Cuisine Type", ["Any", "Italian", "Chinese", "Mexican", "Indian", "Mediterranean"])
     user_ingredients = st.text_area("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
+    for i in range(16):
+        st.sidebar.write('\n')
+        i = i - 1 
+    authenticator.logout('Logout', 'sidebar')
 
     def recipeComplexity(complexity):
         match complexity:
@@ -141,8 +144,8 @@ if st.session_state['authentication_status']:
     def get_recipe_recommendation(ingredients):
         chat_completion = client.chat.completions.create(
             messages=[
-                {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. additionally, write out the instructions to make each dish. keep in mind their allergies and dietary restrictions and make sure these are not in the recipes. if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include it in the recipes you generate. take into account the complexity level the user gives. don't respond with anything else."},
-                {"role": "user", "content": ingredients + cuisine + str(restrictions) + recipeComplexity(complexity)},
+                {"role": "system","content": "Based on the user input, respond with just list of recipes containing those ingredients, and also list out what other ingredients would be needed to make that recipe. additionally, write out the instructions to make each dish. keep in mind their allergies and dietary restrictions and make sure these are not in the recipes. if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include it in the recipes you generate. take into account the complexity level the user gives don't respond with anything else."},
+                {"role": "user", "content": ingredients + cuisine + str(restrictions) + complexity},
             ],
             model="llama3-8b-8192",
             temperature=0.5,
