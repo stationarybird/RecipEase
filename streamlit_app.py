@@ -61,7 +61,9 @@ except Exception as e:
     st.error(e)
 
 if st.session_state['authentication_status']:
-    st.sidebar.write(f"Welcome **{st.session_state['name']}**!")
+    st.sidebar.write(f"Welcome **{st.session_state["name"]}**!")
+    st.sidebar.page_link("streamlit_app.py", label="Home", icon="🏠")
+    st.sidebar.page_link("pages/settings.py", label="Settings", icon="⚙️")
 elif st.session_state['authentication_status'] is False:
     st.error('Username/password is incorrect')
 elif st.session_state['authentication_status'] is None:
@@ -94,13 +96,13 @@ st.markdown(
         margin: auto;
     }
     .recipe-container {
-        background-color: #f9f9f9;
-        border: 1px solid #ddd;
+        background-color: #262730;
+        border: 1px solid #ff6347;
         border-radius: 8px;
         padding: 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         font-size: 16px;
-        color: #333;
+        color: #ffffff;
     }
     </style>
     """,
@@ -149,24 +151,14 @@ if st.session_state['authentication_status']:
     # Initialize the Groq API client
     client = Groq(api_key="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")
 
-    restrictions = st.sidebar.multiselect("What are your dietary restrictions?",["Vegetarian", "Vegan", "Lactose Intolerant", "Halal", "Gluten Free", "No Soy", "Other (specify below)"], placeholder="Select preset restrictions here...",)
     
-    if restrictions and restrictions[-1] == "Other (specify below)":
-        custom_restriction = st.sidebar.text_input(
-            "Add Custom Dietary Restriction (if any):",
-            placeholder="e.g., Peanuts, Strawberries",
-        )
-        # Append custom restriction only if it was entered
-        if custom_restriction:
-            restrictions.append("None of these: " + custom_restriction)
-
     # Sidebar for extra options (optional, for additional functionality)
-    st.sidebar.header("Settings")
-    st.sidebar.write("Adjust your preferences here.")
-    complexity = st.sidebar.slider("Adjust Recipe Complexity:", 1, 5, 3)
-    cuisine = st.sidebar.selectbox("Select Cuisine Type", ["Any", "Italian", "Chinese", "Mexican", "Indian", "Mediterranean"])
     user_ingredients = st.text_area("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
-    for i in range(16):
+    complexity = st.session_state.get('complexity', 3)
+    restrictions = st.session_state.get('restrictions', [])
+    cuisine = st.session_state.get('cuisine', "Any")
+
+    for i in range(15):
         st.sidebar.write('\n')
         i = i - 1 
     authenticator.logout('Logout', 'sidebar')
