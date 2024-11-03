@@ -171,7 +171,8 @@ if st.session_state['authentication_status']:
             messages=[
                 {"role": "system","content": """Based on the user input, respond with just list of recipes containing those 
                 ingredients, and also list out what other ingredients would be needed to make that recipe. 
-                keep in mind their allergies and dietary restrictions and make sure these are definitely not in the recipes. 
+                keep in mind and explicity declare their allergies and dietary restrictions and make sure these are definitely not in the recipes.
+                If applicable, mention their chosen cuisine. 
                 if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include 
                 it in the recipes you generate. take into account the complexity level the user gives. don't respond with anything else."""},
                 {"role": "user", "content": ingredients + cuisine + str(restrictions) + recipeComplexity(complexity)},
