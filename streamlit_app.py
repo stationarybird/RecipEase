@@ -61,9 +61,10 @@ except Exception as e:
     st.error(e)
 
 if st.session_state['authentication_status']:
-    st.sidebar.write(f"Welcome **{st.session_state["name"]}**!")
+    st.sidebar.write(f"Welcome **{st.session_state['name']}**!")
     st.sidebar.page_link("streamlit_app.py", label="Home", icon="🏠")
     st.sidebar.page_link("pages/settings.py", label="Settings", icon="⚙️")
+    st.sidebar.page_link("pages/history.py", label="History", icon="📖")
 elif st.session_state['authentication_status'] is False:
     st.error('Username/password is incorrect')
 elif st.session_state['authentication_status'] is None:
@@ -126,20 +127,6 @@ if st.session_state['authentication_status']:
     # Display title, logo, and description
     st.markdown("<h1 class='title'>RecipEase</h1>", unsafe_allow_html=True)
     # Display history button and retrieve history on click
-    if st.sidebar.button("Show History"):
-        if st.session_state.get('authentication_status'):
-            history = get_user_history(st.session_state['name'])
-            if history:
-                st.sidebar.markdown("### Search History")
-                for search in history:
-                    ingredients, restrictions, complexity, cuisine, timestamp = search
-                    st.sidebar.write(
-                        f"**{timestamp}**\n- Ingredients: {ingredients}\n- Restrictions: {restrictions}\n- Complexity: {complexity}\n- Cuisine: {cuisine}"
-                    )
-            else:
-                st.sidebar.write("No history found.")
-        else:
-            st.sidebar.write("Please log in to view your history.")
 
     # st.image("recipeclip.jpg", width=120)
     st.markdown( "<p style='text-align: center;'>Welcome to <strong>RecipEase</strong>! Enter ingredients you have, and get recipes instantly.</p>",  unsafe_allow_html=True)
