@@ -209,7 +209,7 @@ if st.session_state['authentication_status']:
     st.markdown("### Enter Ingredients:")
 
     # Initialize the Groq API client
-    client = Groq(api_key="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")
+    client = Groq(api_key="")
 
     user_ingredients = st.text_area("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
     complexity = st.session_state.get('complexity', 3)
