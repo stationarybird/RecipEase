@@ -128,6 +128,74 @@ def get_user_history(username):
         ''', (username,))
         return c.fetchall()
 
+def recipeComplexity(complexity):
+    match complexity:
+        case 1:
+            return "Very Easy"
+        case 2:
+            return "Easy"
+        case 3: 
+            return "Medium"
+        case 4:
+            return "Hard"
+        case 5: 
+            return "Very Hard"
+        case _:
+            return "Anything"   # Medium is the default case if complexity doesn't match anything
+
+# Define a function to get recipe recommendations
+def get_recipe_recommendation(ingredients):
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {"role": "system","content": """Based on the user input, respond with just list of recipes containing those 
+            ingredients, and also list out what other ingredients would be needed to make that recipe. 
+            keep in mind and explicity declare their allergies and dietary restrictions and make sure these are definitely not in the recipes.
+            If applicable, mention their chosen cuisine. 
+            if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include 
+            it in the recipes you generate. take into account the complexity level the user gives. don't respond with anything else."""},
+            {"role": "user", "content": ingredients + cuisine + str(restrictions) + recipeComplexity(complexity)},
+        ],
+        model="llama3-8b-8192",
+        temperature=0.5,
+        max_tokens=1024,
+        top_p=1,
+        stop=None,
+        stream=False,
+    )
+    return chat_completion.choices[0].message.content
+
+def get_recipe_instructions(recipeNum, rlist):
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {"role": "system","content": """Write out the instructions to make the recipe of the number given from the recipe list. 
+            keep in mind their allergies and dietary restrictions and make sure these are definitely not in the recipes. 
+            take into account the complexity level the user gives. don't respond with anything else."""},
+            {"role": "user", "content": rlist + recipeNum + str(restrictions) + recipeComplexity(complexity)},
+        ],
+        model="llama3-8b-8192",
+        temperature=0.5,
+        max_tokens=1024,
+        top_p=1,
+        stop=None,
+        stream=False,
+    )
+    return chat_completion.choices[0].message.content
+
+def get_recipe_nutrition(recipe):
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {"role": "system","content": """Write out the nutritional information of the recipe given above. don't respond with anything else."""},
+            {"role": "user", "content": recipe},
+        ],
+        model="llama3-8b-8192",
+        temperature=0.5,
+        max_tokens=1024,
+        top_p=1,
+        stop=None,
+        stream=False,
+    )
+    return chat_completion.choices[0].message.content
+    
 if st.session_state['authentication_status']:
     # Display title, logo, and description
     st.markdown("<h1 class='title'>RecipEase</h1>", unsafe_allow_html=True)
@@ -139,134 +207,55 @@ if st.session_state['authentication_status']:
 
     # User Input Section
     st.markdown("### Enter Ingredients:")
-uploaded_file = st.file_uploader("Upload an image of your ingredients", type=["jpg", "jpeg", "png"])
-
-# Path to the saved model file
-model_path = "food101_model.h5"
-model = tf.keras.models.load_model(model_path)
-
-
-with open("classes.txt", "r") as f:
-    class_labels = [line.strip() for line in f]
-
-def prepare_image(image_path):
-    img = load_img(image_path, target_size=(224, 224))  # Resize image to 224x224
-    img_array = img_to_array(img)  # Convert to numpy array
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-    return preprocess_input(img_array)  # Preprocess the image
-
-def detect_ingredients(image_path):
-    img = prepare_image(image_path)
-    preds = model.predict(img)[0]  # Predict with the model
-    top_indices = preds.argsort()[-3:][::-1]  # Decode predictions
-    ingredients = [(class_labels[i], preds[i] * 100) for i in top_indices]
-    return ingredients
-
-if uploaded_file is not None:
-    with open("temp_image.jpg", "wb") as f:
-        f.write(uploaded_file.getbuffer())
-    
-    # Call the ingredient detection function
-    ingredients_probs = detect_ingredients("temp_image.jpg")
-
-    
-    # Display the detected ingredients
-    st.write("Detected Ingredients:")
-    for ingredient, confidence in ingredients_probs:
-        st.write(f"{ingredient}: {confidence}%")
-
 
     # Initialize the Groq API client
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    client = Groq(api_key="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")
 
-    
-    # Sidebar for extra options (optional, for additional functionality)
     user_ingredients = st.text_area("Which Ingredients Do You Have?", placeholder="e.g., chicken, broccoli, garlic", help="List ingredients separated by commas.")
     complexity = st.session_state.get('complexity', 3)
     restrictions = st.session_state.get('restrictions', [])
     cuisine = st.session_state.get('cuisine', "Any")
+    uploaded_file = st.file_uploader("Upload an image of your ingredients", type=["jpg", "jpeg", "png"])
+
+    # Path to the saved model file
+    model_path = "food101_model.h5"
+    model = tf.keras.models.load_model(model_path)
+
+
+    with open("classes.txt", "r") as f:
+        class_labels = [line.strip() for line in f]
+
+    def prepare_image(image_path):
+        img = load_img(image_path, target_size=(224, 224))  # Resize image to 224x224
+        img_array = img_to_array(img)  # Convert to numpy array
+        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+        return preprocess_input(img_array)  # Preprocess the image
+
+    def detect_ingredients(image_path):
+        img = prepare_image(image_path)
+        preds = model.predict(img)[0]  # Predict with the model
+        top_indices = preds.argsort()[-3:][::-1]  # Decode predictions
+        ingredients = [(class_labels[i], preds[i] * 100) for i in top_indices]
+        return ingredients
+
+    if uploaded_file is not None:
+        with open("temp_image.jpg", "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        
+        # Call the ingredient detection function
+        ingredients_probs = detect_ingredients("temp_image.jpg")
+
+        
+        # Display the detected ingredients
+        st.write("Detected Ingredients:")
+        for ingredient, confidence in ingredients_probs:
+            st.write(f"{ingredient}: {confidence}%")
 
     for i in range(15):
         st.sidebar.write('\n')
         i = i - 1 
     authenticator.logout('Logout', 'sidebar')
-
-    def recipeComplexity(complexity):
-        match complexity:
-            case 1:
-                return "Very Easy"
-            case 2:
-                return "Easy"
-            case 3: 
-                return "Medium"
-            case 4:
-                return "Hard"
-            case 5: 
-                return "Very Hard"
-            case _:
-                return "Anything"   # Medium is the default case if complexity doesn't match anything
-
-    # Define a function to get recipe recommendations
-    def get_recipe_recommendation(ingredients):
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system","content": """Based on the user input, respond with just list of recipes containing those 
-                ingredients, and also list out what other ingredients would be needed to make that recipe. 
-                keep in mind and explicity declare their allergies and dietary restrictions and make sure these are definitely not in the recipes.
-                If applicable, mention their chosen cuisine. 
-                if an ingredient is mentioned that is restricted, make sure you explicilty state that you will not include 
-                it in the recipes you generate. take into account the complexity level the user gives. don't respond with anything else."""},
-                {"role": "user", "content": ingredients + cuisine + str(restrictions) + recipeComplexity(complexity)},
-            ],
-            model="llama3-8b-8192",
-            temperature=0.5,
-            max_tokens=1024,
-            top_p=1,
-            stop=None,
-            stream=False,
-        )
-        return chat_completion.choices[0].message.content
-
-    def get_recipe_instructions(recipeNum, rlist):
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system","content": """Write out the instructions to make the recipe of the number given from the recipe list. 
-                keep in mind their allergies and dietary restrictions and make sure these are definitely not in the recipes. 
-                take into account the complexity level the user gives. don't respond with anything else."""},
-                {"role": "user", "content": rlist + recipeNum + str(restrictions) + recipeComplexity(complexity)},
-            ],
-            model="llama3-8b-8192",
-            temperature=0.5,
-            max_tokens=1024,
-            top_p=1,
-            stop=None,
-            stream=False,
-        )
-        return chat_completion.choices[0].message.content
-
-    def get_recipe_nutrition(recipe):
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system","content": """Write out the nutritional information of the recipe given above. don't respond with anything else."""},
-                {"role": "user", "content": recipe},
-            ],
-            model="llama3-8b-8192",
-            temperature=0.5,
-            max_tokens=1024,
-            top_p=1,
-            stop=None,
-            stream=False,
-        )
-        return chat_completion.choices[0].message.content
  
-
-
-
-
-
-
-
-
     # Button to submit and get recipe recommendations
     if st.button("Get Recipe Recommendation", key="btn-recipe"):
         if user_ingredients:
